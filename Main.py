@@ -1,3 +1,6 @@
+import copy
+import random
+
 import numpy as np
 
 
@@ -63,7 +66,6 @@ class Game:
             return max(score)
 
 
-
 # g = Game(["____G_____"])
 # g.load_next_level()
 
@@ -78,36 +80,128 @@ def read_file(name):
 
 def population(len):
     # chromosomes = [[random.randint(0,2) for i in range(len)] for j in range(200)]
-    chromosomes = [[np.random.choice(np.arange(0, 3), p=[0.5, 0.25, 0.25]) for i in range(len)] for j in range(200)]
-    return chromosomes
+    chromosome = [[np.random.choice(np.arange(0, 3), p=[0.5, 0.25, 0.25]) for i in range(len)] for j in range(200)]
+    return chromosome
 
 
 def convert_str(chro):
-    chromosomes_str=[]
+    chromosomes_s = []
     for i in range(200):
         s = ""
         for j in range(length):
             s += str(chro[i][j])
-        chromosomes_str.append(s)
-    return chromosomes_str
+        chromosomes_s.append(s)
+    return chromosomes_s
 
 
-def fitness(chromosomes, moves):
+def fitness(chromosome, moves, num_chromosome):
     g = Game([moves])
     g.load_next_level()
-    scores=[]
-    for i in range(200):
-        print(chromosomes[i])
-        scores.append(g.get_score(chromosomes[i]))
-        print(scores[i])
-    return scores
+    scr = []
+    for i in range(num_chromosome):
+        # print(chromosome[i])
+        scr.append(g.get_score(chromosome[i]))
+        # print(scr[i])
+    return scr
 
+
+def selection(scr, chromosome):
+    temp_scores = scr
+    temp_scores = np.sort(temp_scores)
+    select_score = []
+    select_chromosome_score = {}
+    selected_number = []
+    for i in range(int(len(scr) / 2)):
+        for j in range(len(scr)):
+            if scr[j] == temp_scores[-i - 1] and j not in selected_number:
+                selected_number.append(j)
+                select_score.append(scr[j])
+                select_chromosome_score.setdefault(i, []).append(scr[j])
+                select_chromosome_score.setdefault(i, []).append(chromosome[j])
+
+                break
+    # print(select_score)
+    return select_score, select_chromosome_score
+
+
+def crossover(scores, chromosome):
+    cross = chromosome.copy()
+    print(cross)
+    # print(cross.get(0)[1])
+    new_chromosome = []
+
+    for i in range(20):
+        new_chromosome.append(cross.get(i)[1])
+
+    for i in range(len(scores) - 20):
+        p1 = random.randint(0, 99)
+        p2 = random.randint(0, 99)
+        parent1 = chromosome.get(p1)[1]
+        parent2 = chromosome.get(p2)[1]
+        c1 = copy.deepcopy(parent1)
+        c2 = copy.deepcopy(parent2)
+        # print(c1 , c2)
+        pt = random.randint(1, len(parent1) - 2)
+        # print(pt)
+        c1 = parent1[:pt] + parent2[pt:]
+        c2 = parent2[:pt] + parent1[pt:]
+        # print(c1 , c2 , pt )
+        new_chromosome.append(c1)
+        new_chromosome.append(c2)
+
+    return new_chromosome
+
+
+def mutation(chromosome):
+    new_pass = []
+
+    for i in range(int(0.25 * len(chromosome))):
+        str = ""
+        s = []
+        if i in new_pass:
+            continue
+        else:
+            new_pass.append(i)
+        pt = random.randint(1, len(chromosome[i]) - 1)
+        if chromosome[i][pt] == "1":
+            for j in range(len(chromosome[i])):
+                if j == pt:
+                    s.append("0")
+                else:
+                    s.append(chromosome[i][j])
+
+            chromosome[i] = str.join(s)
+        else:
+            x = np.random.choice(np.arange(0, 2), p=[0.7, 0.3])
+            if x == 1:
+                for j in range(len(chromosome[i])):
+                    if j == pt:
+                        s.append("2")
+                    else:
+                        s.append(chromosome[i][j])
+
+
+            else:
+                for j in range(len(chromosome[i])):
+                    if j == pt:
+                        s.append("0")
+                    else:
+                        s.append(chromosome[i][j])
+            chromosome[i] = str.join(s)
+
+
+
+    return chromosome
 
 
 if __name__ == "__main__":
     file_name = "level3.txt"
     length, moves = read_file(file_name)
-    chromosomes = population(length)
-    chromosomes_str = convert_str(chromosomes)
-    scores=fitness(chromosomes_str, moves)
-    # print(scores)
+    chromosomes1 = population(length)
+    chromosomes_str = convert_str(chromosomes1)
+    scores = fitness(chromosomes_str, moves, 200)
+    selected_score, selected_chromosomes = selection(scores, chromosomes_str)
+    new_choromosomes = crossover(selected_score, selected_chromosomes)
+    mutation_chromosome = mutation(new_choromosomes)
+
+    
