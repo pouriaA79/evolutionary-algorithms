@@ -47,6 +47,8 @@ class Game:
                 current_score += 1
             elif current_step == 'M' and actions[i - 1] != '1':
                 current_score += 2
+            elif  i == self.current_level_len - 1 :
+                break
             # extra jump
             # elif (current_step != 'G' or current_level[i - 1] == 'L') and actions[i - 2] == '1':
             #     current_score -= 0.5
@@ -84,7 +86,7 @@ def read_file(name):
 
 def population(len, chromosome_num):
     # chromosomes = [[random.randint(0,2) for i in range(len)] for j in range(200)]
-    chromosome = [[np.random.choice(np.arange(0, 3), p=[0.5, 0.25, 0.25]) for i in range(len)] for j in
+    chromosome = [[np.random.choice(np.arange(0, 3), p=[0.4, 0.4, 0.2]) for i in range(len)] for j in
                   range(chromosome_num)]
     return chromosome
 
@@ -158,9 +160,19 @@ def crossover(scores, chromosome, num):
         c2 = copy.deepcopy(parent2)
         # print(c1 , c2)
         pt = random.randint(1, len(parent1) - 2)
-        # print(pt)
-        c1 = parent1[:pt] + parent2[pt:]
-        c2 = parent2[:pt] + parent1[pt:]
+        pt2 = random.randint(1, len(parent1) - 2)
+        if pt2>pt:
+            c1 = parent1[:pt] + parent2[pt:pt2] + parent1[pt2:]
+            c2 = parent2[:pt] + parent1[pt:pt2] + parent2[pt2:]
+        elif pt>pt2:
+            c1 = parent1[:pt2] + parent2[pt2:pt] + parent1[pt:]
+            c2 = parent2[:pt2] + parent1[pt2:pt] + parent2[pt:]
+        else:
+            c1 = parent1[:pt] + parent2[pt:]
+            c2 = parent2[:pt] + parent1[pt:]
+        # c1 = parent1[:pt] + parent2[pt:]
+        # c2 = parent2[:pt] + parent1[pt:]
+
         # print(c1 , c2 , pt )
         new_chromosome.append(c1)
         new_chromosome.append(c2)
@@ -171,7 +183,7 @@ def crossover(scores, chromosome, num):
 def mutation(chromosome):
     new_pass = []
 
-    for i in range(int(0.25 * len(chromosome))):
+    for i in range(int(0.6 * len(chromosome))):
         str = ""
         s = []
         if i in new_pass:
@@ -188,7 +200,7 @@ def mutation(chromosome):
 
             chromosome[i] = str.join(s)
         else:
-            x = np.random.choice(np.arange(0, 2), p=[0.7, 0.3])
+            x = np.random.choice(np.arange(0, 2), p=[0.9, 0.1])
             if x == 1:
                 for j in range(len(chromosome[i])):
                     if j == pt:
@@ -211,7 +223,7 @@ def mutation(chromosome):
 def evaluation(chromosome, moves, num_chromosome):
     final = fitness(chromosome, moves, num_chromosome, True)
     sort = sorted(final.items(), key=lambda x: x[1], reverse=True)
-
+    print(sort)
     return sort
 
 
@@ -227,8 +239,8 @@ def genetic(file_name, chromosome_num, n_iters):
         else:
             scores = fitness(chromosomes_str, moves, chromosomes_num, False)
         scores_level.append(sum(scores) / len(scores))
-        if abs(scores_level[i] - scores_level[i - 1] )< 0.00001 and i>0:
-            print(scores_level[i], scores_level[i - 1],scores_level[i] - scores_level[i - 1] )
+        if abs(scores_level[i] - scores_level[i - 1]) < 0.0000000000001 and i > 0:
+            print(scores_level[i], scores_level[i - 1], scores_level[i] - scores_level[i - 1])
             break
         selected_score, selected_chromosomes = selection(scores, chromosomes_str)
         new_choromosomes = crossover(selected_score, selected_chromosomes, chromosome_num)
@@ -237,6 +249,7 @@ def genetic(file_name, chromosome_num, n_iters):
 
     for i in range(len(sort_answer)):
         if sort_answer[i][1][1]:
+
             return sort_answer[i][1][0], sort_answer[i][1][1], sort_answer[i][1][2]
 
     return sort_answer[0][1][0], sort_answer[0][1][1], sort_answer[0][1][2]
@@ -244,10 +257,10 @@ def genetic(file_name, chromosome_num, n_iters):
 
 if __name__ == "__main__":
     file_names = "level10.txt"
-    chromosomes_num = 200
+    chromosomes_num = 350
     n_iter = 500
     score, end, chromosome = genetic(file_names, chromosomes_num, n_iter)
-    if end :
-        print("pass the level with " + str(score)+" score and  with "+chromosome+ " moves.")
+    if end:
+        print("pass the level with " + str(score) + " score and  with " + chromosome + " moves.")
     else:
         print("cant pass the level best score : " + str(score) + "  with " + chromosome + " moves.")
