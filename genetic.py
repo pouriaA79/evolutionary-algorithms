@@ -2,11 +2,15 @@ import copy
 import os
 import random
 import time
+
 import numpy as np
+
+
 class Game:
     def __init__(self, levels):
         # Get a list of strings as levels
         # Store level length to determine if a sequence of action passes all the steps
+
         self.levels = levels
         self.current_level_index = -1
         self.current_level_len = 0
@@ -19,7 +23,10 @@ class Game:
         # Get an action sequence and determine the steps taken/score
         # Return a tuple, the first one indicates if these actions result in victory
         # and the second one shows the steps taken
+
         current_level = self.levels[self.current_level_index]
+        steps = 0
+        max_score = 0
         current_score = 0
         flag_end = True
         score = []
@@ -44,6 +51,12 @@ class Game:
                 current_score += 2
             elif i == self.current_level_len - 1:
                 break
+            # extra jump
+            # elif (current_step != 'G' or current_level[i - 1] == 'L') and actions[i - 2] == '1':
+            #     current_score -= 0.5
+            # elif current_step == '_' and actions[i - 1] == '1' and i == self.current_level_len - 2:
+            #     current_score += 1
+            #     print(current_score + 2)
 
             else:
                 score.append(current_score)
@@ -136,6 +149,8 @@ def crossover(scores, chromosome, num):
         new_chromosome.append(cross.get(i)[1])
 
     for i in range(len(scores) - int(num / 20)):
+        # p1 = random.randint(0, int(num / 2) - 1)
+        # p2 = random.randint(0, int(num / 2) - 1)
         p1 = random.randint(0, 99)
         p2 = random.randint(0, 99)
         parent1 = chromosome.get(p1)[1]
@@ -160,11 +175,13 @@ def crossover(scores, chromosome, num):
         # print(c1 , c2 , pt )
         new_chromosome.append(c1)
         new_chromosome.append(c2)
+
     return new_chromosome
 
 
 def mutation(chromosome):
     new_pass = []
+
     for i in range(int(0.6 * len(chromosome))):
         str = ""
         s = []
@@ -179,6 +196,7 @@ def mutation(chromosome):
                     s.append("0")
                 else:
                     s.append(chromosome[i][j])
+
             chromosome[i] = str.join(s)
         else:
             x = np.random.choice(np.arange(0, 2), p=[0.95, 0.05])
@@ -188,6 +206,8 @@ def mutation(chromosome):
                         s.append("2")
                     else:
                         s.append(chromosome[i][j])
+
+
             else:
                 for j in range(len(chromosome[i])):
                     if j == pt:
@@ -219,23 +239,27 @@ def genetic(file_name, chromosome_num, n_iters):
             scores = fitness(chromosomes_str, moves, chromosomes_num, False)
         scores_level.append(sum(scores) / len(scores))
         if abs(scores_level[i] - scores_level[i - 1]) < 0.0000000000001 and i > 0:
-            print(scores_level[i], scores_level[i - 1], scores_level[i] - scores_level[i - 1])
+            print(scores_level[i], scores_level[i - 1], scores_level[i] - scores_level[i - 1] )
             break
         selected_score, selected_chromosomes = selection(scores, chromosomes_str)
         new_choromosomes = crossover(selected_score, selected_chromosomes, chromosome_num)
         chromosomes_str = mutation(new_choromosomes)
+
     sort_answer = evaluation(chromosomes_str, moves, chromosome_num)
 
     for i in range(len(sort_answer)):
         if sort_answer[i][1][1]:
             return sort_answer[i][1][0], sort_answer[i][1][1], sort_answer[i][1][2], moves
 
-    return sort_answer[0][1][0], sort_answer[0][1][1], sort_answer[0][1][2]
+    return sort_answer[0][1][0], sort_answer[0][1][1], sort_answer[0][1][2] ,moves
 
 
 def show_path(chromoseme, moves):
     clearConsole = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear')
     clearConsole()
+    print(len(moves), len(chromosomes))
+    time.sleep(20)
+
     for i in range(len(moves) + 1):
         # print(moves)
         print(chromoseme)
@@ -257,34 +281,43 @@ def show_path(chromoseme, moves):
         for j in range(len(moves)):
             if i == 0 and j == 0:
                 print("A ", end='')
+
             elif j > 0 and chromoseme[i - 1] == "2" and i == j:
+
                 print("a ", end='')
+
             elif j > 0 and j == i and chromosomes[i - 1] == "0":
                 print("A ", end='')
             elif moves[j] == 'G' and chromosomes[j - 2] == "1" and i >= 2 and j < i:
                 print("_ ", end='')
+
             elif moves[j] == 'G':
                 print("G ", end='')
+            # elif moves[j] == 'M' and i > 0 and chromoseme[i - 1] != "1" and i == j:
+            #     print("A ", end='')
             elif moves[j] == 'M' and chromosomes[j - 2] != "1" and i >= 2 and j < i:
                 print("_ ", end='')
             elif moves[j] == 'M':
                 print("M ", end='')
             else:
                 print("_ ", end='')
-        time.sleep(3)
+
+        time.sleep(0.2)
+
         clearConsole()
 
     return 0
 
+
 if __name__ == "__main__":
-    file_names = "level6.txt"
+    file_names = "level10.txt"
     chromosomes_num = 350
     n_iter = 500
     score, end, chromosomes, move = genetic(file_names, chromosomes_num, n_iter)
     if end:
         print("pass the level with " + str(score) + " score and  with " + chromosomes + " moves.")
         show_path(chromosomes, move)
-        time.sleep(1)
+        time.sleep(0.2)
 
     else:
         print("cant pass the level best score : " + str(score) + "  with " + chromosomes + " moves.")
